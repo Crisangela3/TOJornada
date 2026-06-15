@@ -1,29 +1,18 @@
 import { useState } from 'react';
 import { academicDatabase } from './data/questions';
-// @ts-ignore
-import './styles/index.css';
 
 export default function App() {
-  const [semestre, setSemestre] = useState<number>(1);
-  const [aba, setAba] = useState<'quiz' | 'flashcards' | 'links'>('quiz');
-  const [exibirManual, setExibirManual] = useState<boolean>(true);
-  
-  // Controle do Quiz
+  const [semestre, setSemestre] = useState<number | null>(null);
   const [nivel, setNivel] = useState<'facil' | 'medio' | 'dificil'>('facil');
   const [idxPergunta, setIdxPergunta] = useState<number>(0);
   const [respondido, setRespondido] = useState<boolean>(false);
   const [altSelecionada, setAltSelecionada] = useState<number | null>(null);
   const [pontos, setPontos] = useState<number>(0);
 
-  // Controle dos Flashcards
-  const [idxFlash, setIdxFlash] = useState<number>(0);
-  const [virado, setVirado] = useState<boolean>(false);
-
-  const dadosSemestre = academicDatabase[semestre];
+  // Filtra os dados com base no banco existente
+  const dadosSemestre = semestre ? academicDatabase[semestre] : null;
   const perguntasDisponiveis = dadosSemestre ? dadosSemestre.perguntas[nivel] : [];
   const perguntaAtual = perguntasDisponiveis[idxPergunta];
-  const flashcardsDisponiveis = dadosSemestre ? dadosSemestre.flashcards : [];
-  const flashcardAtual = flashcardsDisponiveis[idxFlash];
 
   const verificarResposta = (index: number) => {
     if (respondido || !perguntaAtual) return;
@@ -35,181 +24,299 @@ export default function App() {
     }
   };
 
-  const avançarQuiz = () => {
+  const avancarQuiz = () => {
     setRespondido(false);
     setAltSelecionada(null);
     if (idxPergunta + 1 < perguntasDisponiveis.length) {
       setIdxPergunta(idxPergunta + 1);
     } else {
+      alert(`🎉 Fantástico! Você completou o nível ${nivel.toUpperCase()}!`);
+      setSemestre(null);
       setIdxPergunta(0);
-      alert(`🎉 Você concluiu todos os desafios do nível ${nivel.toUpperCase()} do ${semestre}º Semestre!`);
     }
   };
 
-  if (!dadosSemestre) {
-    return <div style={{ padding: '20px', textAlign: 'center' }}>Carregando dados do jogo...</div>;
-  }
-
   return (
-    <div>
-      <header>
-        <h1>TOJornada 🎮</h1>
-        <p>O Desafio Lúdico da Terapia Ocupacional</p>
-      </header>
+    <div style={styles.page}>
+      {/* Injeção de Animações CSS direto no componente para evitar erros no Render */}
+      <style>{`
+        @keyframes gradientBG {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes floatAvatar {
+          0% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-20px) rotate(8deg); }
+          100% { transform: translateY(0px) rotate(0deg); }
+        }
+        @keyframes pulseCard {
+          0% { box-shadow: 0 10px 30px rgba(255,106,0,0.2); }
+          50% { box-shadow: 0 10px 35px rgba(0,210,255,0.4); }
+          100% { box-shadow: 0 10px 30px rgba(255,106,0,0.2); }
+        }
+        .btn-opcao:hover {
+          transform: scale(1.02) translateY(-2px);
+          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+      `}</style>
 
-      {/* Avatar Dinâmico */}
-      <div id="avatar-ludico" className="avatar-animado">👩‍💻</div>
+      <div style={styles.container}>
+        {/* Topo com o Avatar Animado */}
+        <header style={styles.header}>
+          <div style={{ animation: 'floatAvatar 3s ease-in-out infinite', display: 'inline-block', fontSize: '4.5rem' }}>👩‍💻</div>
+          <h1 style={styles.mainTitle}>TOJornada</h1>
+          <p style={styles.subtitle}>Desafie seus conhecimentos em Terapia Ocupacional!</p>
+        </header>
 
-      <div className="container">
-        
-        {/* Seção Interativa do Manual de Instruções */}
-        <button 
-          className="btn-manual-toggle" 
-          onClick={() => setExibirManual(!exibirManual)}
-        >
-          {exibirManual ? "📖 Ocultar Manual" : "📘 Abrir Manual de Instruções"}
-        </button>
-
-        {exibirManual && (
-          <div className="manual-box">
-            <h3>📖 Como Jogar o TOJornada:</h3>
-            <ul style={{ marginTop: '10px', paddingLeft: '20px', lineHeight: '1.6' }}>
-              <li><strong>Passo 1:</strong> Selecione o Semestre letivo que deseja explorar no seletor abaixo.</li>
-              <li><strong>Passo 2:</strong> Use o <strong>Quiz Dinâmico</strong> para testar seus conhecimentos divididos nos níveis 🟢 Fácil, 🟡 Médio e 🔴 Difícil.</li>
-              <li><strong>Passo 3:</strong> Ative a aba de <strong>Flashcards</strong> para revisar conceitos rápidos de memorização ativa (basta clicar no card para virar!).</li>
-              <li><strong>Passo 4:</strong> Acesse a aba <strong>Links de Estudo</strong> para abrir conteúdos reais e complementares direto da faculdade.</li>
-            </ul>
-          </div>
-        )}
-
-        {/* Escolha do Semestre */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>📍 Escolha o Período Letivo:</label>
-          <select 
-            value={semestre} 
-            onChange={(e) => {
-              setSemestre(Number(e.target.value));
-              setIdxPergunta(0);
-              setIdxFlash(0);
-              setRespondido(false);
-              setAltSelecionada(null);
-            }}
-          >
-            {Object.keys(academicDatabase).map((num) => (
-              <option key={num} value={num}>
-                {num}º Semestre - {academicDatabase[Number(num)].nome.split(": ")[1]}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Abas Alternáveis */}
-        <div className="tabs">
-          <button className={`tab-btn ${aba === 'quiz' ? 'active' : ''}`} onClick={() => setAba('quiz')}>🕹️ Quiz</button>
-          <button className={`tab-btn ${aba === 'flashcards' ? 'active' : ''}`} onClick={() => setAba('flashcards')}>🎴 Flashcards</button>
-          <button className={`tab-btn ${aba === 'links' ? 'active' : ''}`} onClick={() => setAba('links')}>📚 Material de Apoio</button>
-        </div>
-
-        {/* Card Principal de Exibição */}
-        <div className="card">
-          <h2>{dadosSemestre.nome}</h2>
-
-          {/* CONTEÚDO DA ABA 1: QUIZ */}
-          {aba === 'quiz' && perguntaAtual && (
-            <div>
-              <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <label style={{ fontWeight: 'bold', marginRight: '8px' }}>Nível:</label>
-                  <select 
-                    value={nivel} 
-                    onChange={(e) => {
-                      setNivel(e.target.value as 'facil' | 'medio' | 'dificil');
-                      setIdxPergunta(0);
-                      setRespondido(false);
-                      setAltSelecionada(null);
-                    }}
-                    style={{ width: 'auto', display: 'inline-block', padding: '8px' }}
-                  >
-                    <option value="facil">🟢 Fácil (+10 pts)</option>
-                    <option value="medio">🟡 Médio (+20 pts)</option>
-                    <option value="dificil">🔴 Difícil (+30 pts)</option>
-                  </select>
-                </div>
-                <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--laranja)' }}>🏆 Score: {pontos}</span>
-              </div>
-
-              <p style={{ fontSize: '19px', fontWeight: 'bold', margin: '20px 0' }}>{perguntaAtual.q}</p>
-
-              {perguntaAtual.a.map((alternativa: string, i: number) => {
-                let classeValidacao = "";
-                if (respondido) {
-                  if (i === perguntaAtual.c) classeValidacao = "correta";
-                  else if (i === altSelecionada) classeValidacao = "errada";
-                }
-                return (
-                  <button 
-                    key={i} 
-                    className={`opcao-btn ${classeValidacao}`} 
-                    onClick={() => verificarResposta(i)}
-                  >
-                    {alternativa}
-                  </button>
-                );
-              })}
-
-              {respondido && (
-                <div style={{ marginTop: '20px' }}>
-                  <button className="btn-primary" onClick={avançarQuiz}>Próxima Questão ➡️</button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* CONTEÚDO DA ABA 2: FLASHCARDS */}
-          {aba === 'flashcards' && (
-            <div>
-              {flashcardAtual ? (
-                <div>
-                  <p style={{ textAlign: 'center', color: '#555' }}>Clique no cartão para descobrir o verso:</p>
-                  <div className="flashcard-box" onClick={() => setVirado(!virado)}>
-                    <div className={`flashcard-inner ${virado ? 'flipped' : ''}`}>
-                      <div className="face front">{flashcardAtual.frente}</div>
-                      <div className="face back">{flashcardAtual.verso}</div>
-                    </div>
-                  </div>
-                  <div style={{ marginTop: '20px' }}>
-                    <button 
-                      className="btn-primary" 
-                      onClick={() => {
-                        setVirado(false);
-                        setIdxFlash((idxFlash + 1) % flashcardsDisponiveis.length);
-                      }}
-                    >
-                      Próximo Card 🔄
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <p>Nenhum flashcard adicionado para este semestre.</p>
-              )}
-            </div>
-          )}
-
-          {/* CONTEÚDO DA ABA 3: MATERIAL DE APOIO */}
-          {aba === 'links' && (
-            <div>
-              <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>🔗 Links oficiais e artigos para aprofundar os estudos:</p>
-              {dadosSemestre.links.map((lnk: { titulo: string; url: string; descricao: string }, idx: number) => (
-                <div key={idx} className="link-estudo-card">
-                  <a href={lnk.url} target="_blank" rel="noreferrer">{lnk.titulo} ↗️</a>
-                  <p>{lnk.descricao}</p>
-                </div>
+        {/* MÓDULO 1: SELEÇÃO DE SEMESTRES (TELA INICIAL VIBRANTE) */}
+        {semestre === null ? (
+          <div style={{ ...styles.card, animation: 'pulseCard 4s infinite' }}>
+            <h2 style={styles.cardTitle}>📍 Escolha sua Próxima Parada:</h2>
+            <p style={{ textAlign: 'center', marginBottom: '30px', color: '#666' }}>Selecione um dos períodos acadêmicos para ativar os Flashcards e Desafios:</p>
+            
+            <div style={styles.gridSemestres}>
+              {[1, 2, 3, 4].map((num) => (
+                <button
+                  key={num}
+                  onClick={() => setSemestre(num)}
+                  className="btn-opcao"
+                  style={styles.btnSemestre}
+                >
+                  <span style={{ fontSize: '1.5rem', display: 'block' }}>📚</span>
+                  {num}º Semestre
+                </button>
               ))}
             </div>
-          )}
+          </div>
+        ) : (
+          /* MÓDULO 2: O JOGO ATIVO */
+          <div style={{ ...styles.card, borderTop: '8px solid var(--laranja)' }}>
+            <button onClick={() => setSemestre(null)} className="btn-opcao" style={styles.btnVoltar}>
+              ⬅️ Voltar ao Menu Principal
+            </button>
 
-        </div>
+            <div style={styles.quizHeader}>
+              <div>
+                <label style={{ fontWeight: 'bold', marginRight: '10px', color: '#0A2540' }}>Dificuldade:</label>
+                <select
+                  value={nivel}
+                  onChange={(e) => {
+                    setNivel(e.target.value as 'facil' | 'medio' | 'dificil');
+                    setIdxPergunta(0);
+                    setRespondido(false);
+                    setAltSelecionada(null);
+                  }}
+                  style={styles.selectNivel}
+                >
+                  <option value="facil">🟢 Nível Fácil</option>
+                  <option value="medio">🟡 Nível Médio</option>
+                  <option value="dificil">🔴 Nível Difícil</option>
+                </select>
+              </div>
+              <div style={styles.scoreBadge}>🏆 {pontos} Pontos</div>
+            </div>
+
+            {perguntaAtual ? (
+              <div>
+                <div style={styles.progresso}>Questão {idxPergunta + 1} de {perguntasDisponiveis.length}</div>
+                <h3 style={styles.perguntaTexto}>{perguntaAtual.q}</h3>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {perguntaAtual.a.map((alternativa: string, i: number) => {
+                    let estiloBotao = { ...styles.btnAlternativa };
+                    
+                    if (respondido) {
+                      if (i === perguntaAtual.c) {
+                        estiloBorderAndBg(estiloBotao, '#2ECC71', '#FFFFFF'); // Correta: Verde
+                      } else if (i === altSelecionada) {
+                        estiloBorderAndBg(estiloBotao, '#E74C3C', '#FFFFFF'); // Errada: Vermelho
+                      } else {
+                        estiloBotao.opacity = '0.6';
+                      }
+                    }
+
+                    return (
+                      <button
+                        key={i}
+                        disabled={respondido}
+                        onClick={() => verificarResposta(i)}
+                        className="btn-opcao"
+                        style={estiloBotao}
+                      >
+                        {alternativa}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {respondido && (
+                  <div style={{ marginTop: '30px', textAlign: 'center' }}>
+                    <p style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '15px', color: altSelecionada === perguntaAtual.c ? '#2ECC71' : '#E74C3C' }}>
+                      {altSelecionada === perguntaAtual.c ? '🎉 Arrasou! Resposta exata!' : '❌ Ops! Dê uma revisada no manual básico.'}
+                    </p>
+                    <button onClick={avancarQuiz} className="btn-opcao" style={styles.btnAvancar}>
+                      Próxima Pergunta ➡️
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p style={{ textAlign: 'center', color: '#666' }}>Nenhum desafio cadastrado para este nível ainda.</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+// Helper rápido para mudar cores no clique
+function estiloBorderAndBg(objeto: any, cor: string, texto: string) {
+  objeto.backgroundColor = cor;
+  objeto.borderColor = cor;
+  objeto.color = texto;
+}
+
+// Estilização Completa e Moderna via Objeto (Design Limpo e Colorido)
+const styles: Record<string, React.CSSProperties> = {
+  page: {
+    minHeight: '100vh',
+    background: 'linear-gradient(-45deg, #FFFDF6, #FFF5E6, #E6F9FF, #FFFDF6)',
+    backgroundSize: '400% 400%',
+    animation: 'gradientBG 15s ease infinite',
+    padding: '40px 20px',
+    fontFamily: '"Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+  },
+  container: {
+    maxWidth: '800px',
+    margin: '0 auto'
+  },
+  header: {
+    textAlign: 'center',
+    marginBottom: '40px'
+  },
+  mainTitle: {
+    fontSize: '3.5rem',
+    fontWeight: '900',
+    background: 'linear-gradient(45deg, #FF6A00, #FFCA28)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    margin: '10px 0 5px 0',
+    letterSpacing: '-1px'
+  },
+  subtitle: {
+    color: '#0A2540',
+    fontSize: '1.2rem',
+    fontWeight: '600',
+    opacity: 0.8
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: '24px',
+    padding: '40px',
+    boxShadow: '0 10px 30px rgba(10,37,64,0.05)',
+    border: '2px solid rgba(255,106,0,0.1)',
+    transition: 'all 0.3s ease'
+  },
+  cardTitle: {
+    textAlign: 'center',
+    fontSize: '1.8rem',
+    color: '#0A2540',
+    marginBottom: '10px',
+    fontWeight: '800'
+  },
+  gridSemestres: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '20px',
+    marginTop: '20px'
+  },
+  btnSemestre: {
+    padding: '30px 20px',
+    backgroundColor: '#00D2FF',
+    color: '#0A2540',
+    border: 'none',
+    borderRadius: '16px',
+    fontSize: '1.3rem',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 4px 10px rgba(0,210,255,0.2)'
+  },
+  btnVoltar: {
+    background: 'none',
+    border: 'none',
+    color: '#FF6A00',
+    fontWeight: 'bold',
+    fontSize: '1rem',
+    cursor: 'pointer',
+    marginBottom: '25px',
+    display: 'inline-block'
+  },
+  quizHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '30px',
+    backgroundColor: '#FFFDF6',
+    padding: '15px 20px',
+    borderRadius: '12px',
+    border: '1px solid rgba(0,210,255,0.2)'
+  },
+  selectNivel: {
+    padding: '10px',
+    borderRadius: '8px',
+    border: '2px solid #00D2FF',
+    backgroundColor: '#FFFFFF',
+    fontWeight: 'bold',
+    color: '#0A2540',
+    cursor: 'pointer'
+  },
+  scoreBadge: {
+    backgroundColor: '#FF6A00',
+    color: '#FFFFFF',
+    padding: '10px 20px',
+    borderRadius: '50px',
+    fontWeight: 'bold',
+    fontSize: '1.1rem',
+    boxShadow: '0 4px 10px rgba(255,106,0,0.3)'
+  },
+  progresso: {
+    fontSize: '0.9rem',
+    fontWeight: 'bold',
+    color: '#00D2FF',
+    textTransform: 'uppercase',
+    letterSpacing: '1px'
+  },
+  perguntaTexto: {
+    fontSize: '1.4rem',
+    color: '#0A2540',
+    margin: '15px 0 30px 0',
+    lineHeight: '1.5',
+    fontWeight: '700'
+  },
+  btnAlternativa: {
+    padding: '18px 25px',
+    backgroundColor: '#FFFDF6',
+    color: '#0A2540',
+    border: '2px solid #00D2FF',
+    borderRadius: '14px',
+    textAlign: 'left',
+    fontSize: '1.1rem',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
+  },
+  btnAvancar: {
+    padding: '15px 35px',
+    backgroundColor: '#FF6A00',
+    color: '#FFFFFF',
+    border: 'none',
+    borderRadius: '12px',
+    fontSize: '1.1rem',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    boxShadow: '0 5px 15px rgba(255,106,0,0.3)'
+  }
+};
