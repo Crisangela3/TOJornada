@@ -22,7 +22,12 @@ try {
   }).catch(() => {});
 } catch (e) {}
 
-const temasSemestre: Record<number, { bg: string; card: string; border: string; accent: string; texto: string }> = {
+const themesHelper = (num: number): string => {
+  const cores: Record<number, string> = { 1: '#A855F7', 2: '#00D2FF', 3: '#10B981', 4: '#EF4444', 5: '#F59E0B', 6: '#EC4899', 7: '#06B6D4', 8: '#84CC16' };
+  return cores[num] || '#3B82F6';
+};
+
+const themesConfig: Record<number, { bg: string; card: string; border: string; accent: string; texto: string }> = {
   1: { bg: 'linear-gradient(135deg, #1A153B 0%, #090714 100%)', card: '#15122C', border: '#A855F7', accent: '#A855F7', texto: '#FFF' }, 
   2: { bg: 'linear-gradient(135deg, #0A192F 0%, #020C1B 100%)', card: '#0B1E36', border: '#00D2FF', accent: '#00D2FF', texto: '#FFF' }, 
   3: { bg: 'linear-gradient(135deg, #062817 0%, #02110A 100%)', card: '#0B3A21', border: '#10B981', accent: '#10B981', texto: '#FFF' }, 
@@ -37,14 +42,13 @@ export default function App() {
   const [semestre, setSemestre] = useState<number | null>(null);
   const [modoJogo, setModoJogo] = useState<'quiz' | 'memoria' | 'flashcard'>('quiz');
   const [tipoPlayer, setTipoPlayer] = useState<'single' | 'multi'>('single');
-  const [turnoJogador, setTurnoJogador] = useState<number>(1); // 1 ou 2
+  const [turnoJogador, setTurnoJogador] = useState<number>(1);
   
-  const [nivel, setNivel] = useState<'facil' | 'medio' | 'dificil'>('facil');
+  const [nivel] = useState<'facil' | 'medio' | 'dificil'>('facil');
   const [idxPergunta, setIdxPergunta] = useState<number>(0);
   const [respondido, setRespondido] = useState<boolean>(false);
   const [altSelecionada, setAltSelecionada] = useState<number | null>(null);
   
-  // Placar separado para Multiplayer de mesa
   const [pontosP1, setPontosP1] = useState<number>(0);
   const [pontosP2, setPontosP2] = useState<number>(0);
 
@@ -54,7 +58,7 @@ export default function App() {
   const [mostrarManual, setMostrarManual] = useState<boolean>(false);
 
   const temaAtual = semestre 
-    ? temasSemestre[semestre] 
+    ? themesConfig[semestre] 
     : { bg: 'radial-gradient(circle, #1A153B 0%, #090714 100%)', card: '#15122C', border: '#251F4F', accent: '#00D2FF', texto: '#FFF' };
 
   const dadosSemestre = semestre ? (perguntasBanco[semestre] || fallbackDatabase[semestre]) : null;
@@ -83,7 +87,6 @@ export default function App() {
     setAltSelecionada(null);
     setIdxPergunta(prev => prev + 1);
     
-    // Alterna o turno caso seja multiplayer de mesa
     if (tipoPlayer === 'multi') {
       setTurnoJogador(prev => (prev === 1 ? 2 : 1));
     }
@@ -117,10 +120,8 @@ export default function App() {
         .btn-game { transition: all 0.1s ease; cursor: pointer; border: none; font-weight: bold; }
         .btn-game:hover { transform: translateY(-2px); filter: brightness(1.2); }
         .tab-ativa { border-bottom: 4px solid ${temaAtual.accent} !important; color: ${temaAtual.accent} !important; }
-        .btn-toggle { padding: 12px 24px; borderRadius: '12px'; font-size: '1rem'; cursor: 'pointer'; border: 'none'; font-weight: 'bold'; }
       `}</style>
 
-      {/* BOTÃO FIXO: MANUAL DE COMO JOGAR */}
       <button 
         onClick={() => setMostrarManual(!mostrarManual)} 
         style={styles.btnManualFixo}
@@ -135,7 +136,6 @@ export default function App() {
           <p style={{ ...styles.subtitle, color: temaAtual.accent }}>PLATAFORMA GAMIFICADA DE TERAPIA OCUPACIONAL</p>
         </header>
 
-        {/* MODAL/POPUP DO MANUAL DE INSTRUÇÕES */}
         {mostrarManual && (
           <div style={styles.caixaManualBox}>
             <h3 style={{ color: '#FFCA28', marginTop: 0 }}>📖 MANUAL DA JORNADA ACADÊMICA</h3>
@@ -146,10 +146,7 @@ export default function App() {
         )}
 
         {semestre === null ? (
-          /* MENU PRINCIPAL DE SELEÇÃO */
           <div style={styles.card}>
-            
-            {/* NOVO SELETOR DE MODALIDADE: 1 PLAYER VS MULTIPLAYER */}
             <div style={styles.secaoConfiguracaoModo}>
               <h3 style={{ fontSize: '1.1rem', marginBottom: '12px', textAlign: 'center' }}>👥 CONFIGURAÇÃO DE EQUIPE:</h3>
               <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
@@ -183,11 +180,9 @@ export default function App() {
             </div>
           </div>
         ) : (
-          /* PLATAFORMA INTERNA DO SEMESTRE */
           <div style={{ ...styles.card, backgroundColor: temaAtual.card, borderColor: temaAtual.border }}>
             <button onClick={reiniciarGeral} style={styles.btnVoltar}>⬅️ Mudar de Semestre / Sair</button>
             
-            {/* DISPLAY DE PONTUAÇÃO DINÂMICO CONFORME O MODO SELECIONADO */}
             <div style={styles.painelPlacarStatus}>
               {tipoPlayer === 'single' ? (
                 <div style={styles.badgePlacar}>🏆 SCORE: {pontosP1} PTS</div>
@@ -200,14 +195,12 @@ export default function App() {
               )}
             </div>
 
-            {/* ABAS DE ESTILOS DE JOGO */}
             <div style={styles.abasAbordagem}>
               <button onClick={() => setModoJogo('quiz')} className={`btn-game ${modoJogo === 'quiz' ? 'tab-ativa' : ''}`} style={styles.abaItem}>🎮 QUIZ NEON</button>
               <button onClick={() => setModoJogo('memoria')} className={`btn-game ${modoJogo === 'memoria' ? 'tab-ativa' : ''}`} style={styles.abaItem}>🧠 MEMÓRIA</button>
               <button onClick={() => setModoJogo('flashcard')} className={`btn-game ${modoJogo === 'flashcard' ? 'tab-ativa' : ''}`} style={styles.abaItem}>⚡ FLASHCARDS</button>
             </div>
 
-            {/* INTERFACE QUIZ */}
             {modoJogo === 'quiz' && (
               <div>
                 {perguntaAtual ? (
@@ -216,7 +209,7 @@ export default function App() {
                       <h3>{perguntaAtual.q}</h3>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '20px' }}>
-                      {perguntaAtual.a.map((alt, i) => (
+                      {perguntaAtual.a.map((alt: string, i: number) => (
                         <button
                           key={i}
                           disabled={respondido}
@@ -243,7 +236,6 @@ export default function App() {
               </div>
             )}
 
-            {/* INTERFACE MEMÓRIA */}
             {modoJogo === 'memoria' && (
               <div style={{ textAlign: 'center', padding: '20px' }}>
                 <h3 style={{ color: temaAtual.accent }}>🧠 DETECTIVE MEMÓRIA</h3>
@@ -259,30 +251,27 @@ export default function App() {
               </div>
             )}
 
-            {/* INTERFACE FLASHCARDS */}
             {modoJogo === 'flashcard' && (
               <div style={{ textAlign: 'center', padding: '20px' }}>
                 <div style={{ ...styles.caixaPerguntaMestre, borderColor: temaAtual.accent, minHeight: '120px' }}>
                   <h4>📚 REVISÃO RÁPIDA - SEMESTRE {semestre}</h4>
-                  <p style={{ fontSize: '1.1rem', marginTop: '10px' }}>O foco central da intervenção está no engajamento nas ocupações significativas do sujeito.</p>
+                  <p style={{ fontSize: '1.1rem', marginTop: '10px' }}>O foco central da intervention está no engajamento nas ocupações significativas do sujeito.</p>
                 </div>
               </div>
             )}
 
-            {/* FERRAMENTAS DE SUPORTE */}
             <div style={styles.ferramentasEstudo}>
               <button onClick={() => setMostrarMapa(!mostrarMapa)} className="btn-game" style={styles.btnSecundario}>🗺️ {mostrarMapa ? 'Ocultar Árvore Mental' : 'Ver Mapa Mental'}</button>
               <button onClick={gerarPDFEstudos} className="btn-game" style={{ ...styles.btnSecundario, backgroundColor: '#10B981' }}>🖨️ Exportar Cartão (.TXT)</button>
             </div>
 
-            {/* MAPA MENTAL */}
             {mostrarMapa && (
               <div style={styles.areaMapaMental}>
                 <h4 style={{ color: temaAtual.accent }}>📍 DIAGRAMA DE ACERTOS:</h4>
                 <div style={styles.nohCentral}>MAPA TO {semestre}º</div>
                 <div style={styles.linhaConexao}>│</div>
                 <div style={styles.gridNohs}>
-                  {acertosMapa.length > 0 ? acertosMapa.map((acerto, index) => (
+                  {acertosMapa.length > 0 ? acertosMapa.map((acerto: string, index: number) => (
                     <div key={index} style={styles.nohFilho}>🎯 {acerto}</div>
                   )) : <p style={{ fontSize: '0.9rem', color: '#888' }}>Pontue nas atividades para alimentar as ramificações de estudos.</p>}
                 </div>
@@ -293,11 +282,6 @@ export default function App() {
       </div>
     </div>
   );
-}
-
-function themesHelper(num: number): string {
-  const cores: Record<number, string> = { 1: '#A855F7', 2: '#00D2FF', 3: '#10B981', 4: '#EF4444', 5: '#F59E0B', 6: '#EC4899', 7: '#06B6D4', 8: '#84CC16' };
-  return cores[num] || '#3B82F6';
 }
 
 const styles: Record<string, React.CSSProperties> = {
