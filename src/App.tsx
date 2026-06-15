@@ -165,7 +165,7 @@ export default function App() {
             <div>
               {flashcardAtual ? (
                 <div>
-                  <p style={{ textAlgn: 'center', color: '#555' }}>Clique no cartão para descobrir o verso:</p>
+                  <p style={{ textAlign: 'center', color: '#555' }}>Clique no cartão para descobrir o verso:</p>
                   <div className="flashcard-box" onClick={() => setVirado(!virado)}>
                     <div className={`flashcard-inner ${virado ? 'flipped' : ''}`}>
                       <div className="face front">{flashcardAtual.frente}</div>

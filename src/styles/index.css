@@ -1,3 +1,7 @@
+```tsx
+  // @ts-ignore
+  import './styles/index.css';
+
 :root {
     --bg-suave: #FFFDF6;
     --card-branco: #FFFFFF;
